@@ -9,7 +9,6 @@ BOARD_KERNEL_BASE        := 0x00000000
 BOARD_KERNEL_PAGESIZE    := 4096
 BOARD_KERNEL_TAGS_OFFSET := 0x00000100
 BOARD_RAMDISK_OFFSET     := 0x01000000
-BOARD_KERNEL_CMDLINE     := console=ttyMSM0,115200n8 androidboot.console=ttyMSM0
 BOARD_KERNEL_CMDLINE     := androidboot.hardware=cheeseburger androidboot.boot_devices=soc@0/1da4000.ufshc
 BOARD_KERNEL_CMDLINE     += firmware_class.path=/vendor/firmware/ init=/init printk.devkmsg=on
 BOARD_KERNEL_CMDLINE     += deferred_probe_timeout=30
