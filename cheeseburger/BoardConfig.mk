@@ -14,6 +14,7 @@ BOARD_KERNEL_CMDLINE     := androidboot.hardware=cheeseburger androidboot.boot_d
 BOARD_KERNEL_CMDLINE     += firmware_class.path=/vendor/firmware/ init=/init printk.devkmsg=on
 BOARD_KERNEL_CMDLINE     += deferred_probe_timeout=30
 BOARD_KERNEL_CMDLINE     += fw_devlink=permissive
+BOARD_KERNEL_CMDLINE     += androidboot.selinux=permissive
  
 # Image Configuration
 BOARD_BOOTIMAGE_PARTITION_SIZE := 67108864
