@@ -10,7 +10,7 @@
 #
 
 PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/beryllium.mk
+    $(LOCAL_DIR)/cheeseburger.mk
 
 COMMON_LUNCH_CHOICES := \
-    beryllium-userdebug
+    cheeseburger-userdebug
