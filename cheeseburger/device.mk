@@ -42,3 +42,5 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_COPY_FILES += \
     device/oneplus/cheeseburger/qcom/init.qcom.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.qcom.rc
+
+include device/oneplus/cheeseburger/cheeseburger/firmware.mk
