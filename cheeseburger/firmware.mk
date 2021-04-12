@@ -26,3 +26,8 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     vendor/oneplus/ath10k/WCN3990/hw1.0/board-2.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/ath10k/WCN3990/hw1.0/board-2.bin \
     vendor/oneplus/ath10k/WCN3990/hw1.0/firmware-5.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/ath10k/WCN3990/hw1.0/firmware-5.bin
+
+# Bluetooth firmware
+PRODUCT_COPY_FILES += \
+    vendor/oneplus/qca/crbtfw21.tlv:$(TARGET_COPY_OUT_VENDOR)/firmware/qca/crbtfw21.tlv \
+    vendor/oneplus/qca/crnv21.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/qca/crnv21.bin
