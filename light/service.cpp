@@ -30,10 +30,9 @@ using android::hardware::joinRpcThreadpool;
 using android::hardware::light::V2_0::ILight;
 using android::hardware::light::V2_0::implementation::Light;
 
-const static std::string kLcdBacklightPath = "/sys/class/leds/lcd-backlight/brightness";
-const static std::string kLcdMaxBacklightPath = "/sys/class/leds/lcd-backlight/max_brightness";
-const static std::string kButtonBacklightPath = "/sys/class/leds/button-backlight/brightness";
-const static std::string kRgbBlinkPath = "/sys/class/leds/rgb/rgb_blink";
+const static std::string kLcdBacklightPath = "/sys/class/backlight/c994000.dsi.0/brightness";
+const static std::string kLcdMaxBacklightPath = "/sys/class/backlight/c994000.dsi.0/max_brightness";
+const static std::string kButtonBacklightPath = "/sys/class/leds/keypad-backlight/brightness";
 
 int main() {
     uint32_t lcdMaxBrightness = 255;
