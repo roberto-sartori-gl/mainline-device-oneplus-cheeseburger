@@ -32,6 +32,10 @@ PRODUCT_COPY_FILES := \
 # Build generic Audio HAL
 PRODUCT_PACKAGES := audio.primary.cheeseburger
 
+# Lights
+PRODUCT_PACKAGES += \
+    android.hardware.light@2.0-service.oneplus_msm8998
+
 PRODUCT_PACKAGES += \
     pd-mapper \
     qrtr-ns \
