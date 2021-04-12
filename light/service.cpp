@@ -28,7 +28,6 @@ using android::hardware::joinRpcThreadpool;
 
 // Generated HIDL files
 using android::hardware::light::V2_0::ILight;
-using android::hardware::light::V2_0::implementation::Led;
 using android::hardware::light::V2_0::implementation::Light;
 
 const static std::string kLcdBacklightPath = "/sys/class/leds/lcd-backlight/brightness";
@@ -61,35 +60,9 @@ int main() {
                      << " (" << strerror(errno) << ")";
     }
 
-    Led redLed(0, "red");
-    if (!redLed) {
-        LOG(ERROR) << "Failed to create red LED";
-        return -1;
-    }
-
-    Led greenLed(1, "green");
-    if (!greenLed) {
-        LOG(ERROR) << "Failed to create green LED";
-        return -1;
-    }
-
-    Led blueLed(2, "blue");
-    if (!blueLed) {
-        LOG(ERROR) << "Failed to create blue LED";
-        return -1;
-    }
-
-    std::ofstream rgbBlink(kRgbBlinkPath);
-    if (!rgbBlink) {
-        LOG(ERROR) << "Failed to open " << kRgbBlinkPath << ", error=" << errno
-                   << " (" << strerror(errno) << ")";
-        return -errno;
-    }
-
     android::sp<ILight> service = new Light(
             { std::move(lcdBacklight), lcdMaxBrightness },
-            std::move(buttonBacklight), std::move(redLed), std::move(greenLed),
-            std::move(blueLed), std::move(rgbBlink));
+            std::move(buttonBacklight));
 
     configureRpcThreadpool(1, true);
 

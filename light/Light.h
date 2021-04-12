@@ -45,48 +45,27 @@ public:
 
     void off() { setBrightness(0); }
     void setBrightness(int value);
-    void setBlink(int brightness, int onMs, int offMs);
 
 private:
     int                 mIndex;
     std::string         mName;
     std::ofstream       mBrightness;
-    std::ofstream       mDutyPcts;
-    std::ofstream       mStartIdx;
-    std::ofstream       mPauseLo;
-    std::ofstream       mPauseHi;
-    std::ofstream       mRampStepMs;
-    std::ofstream       mBlink;
 };
 
 struct Light : public ILight {
     Light(std::pair<std::ofstream, uint32_t>&& lcd_backlight,
-          std::ofstream&& button_backlight, Led&& red_led, Led&& green_led,
-          Led&& blue_led, std::ofstream&& rgb_blink);
+          std::ofstream&& button_backlight);
 
     // Methods from ::android::hardware::light::V2_0::ILight follow.
     Return<Status> setLight(Type type, const LightState& state) override;
     Return<void> getSupportedTypes(getSupportedTypes_cb _hidl_cb) override;
 
   private:
-    void setAttentionLight(const LightState& state);
-    void setBatteryLight(const LightState& state);
     void setButtonBacklight(const LightState& state);
     void setLcdBacklight(const LightState& state);
-    void setNotificationLight(const LightState& state);
-    void setSpeakerBatteryLightLocked();
-    void setSpeakerLightLocked(const LightState& state);
 
     std::pair<std::ofstream, uint32_t> mLcdBacklight;
     std::ofstream&& mButtonBacklight;
-    Led mRedLed;
-    Led mGreenLed;
-    Led mBlueLed;
-    std::ofstream mRgbBlink;
-
-    LightState mAttentionState;
-    LightState mBatteryState;
-    LightState mNotificationState;
 
     std::unordered_map<Type, std::function<void(const LightState&)>> mLights;
     std::mutex mLock;

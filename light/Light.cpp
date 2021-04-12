@@ -23,10 +23,6 @@
 namespace {
 using android::hardware::light::V2_0::LightState;
 
-static constexpr int RAMP_SIZE = 8;
-static constexpr int RAMP_STEP_DURATION = 50;
-
-static constexpr int BRIGHTNESS_RAMP[RAMP_SIZE] = {0, 12, 25, 37, 50, 72, 85, 100};
 static constexpr int DEFAULT_MIN_BRIGHTNESS = 1;
 static constexpr int DEFAULT_SCALED_MIN_BRIGHTNESS = 1;
 static constexpr int DEFAULT_MAX_BRIGHTNESS = 255;
@@ -37,21 +33,6 @@ static uint32_t rgbToBrightness(const LightState& state) {
             (29 * (color & 0xff))) >> 8;
 }
 
-static bool isLit(const LightState& state) {
-    return (state.color & 0x00ffffff);
-}
-
-static std::string getScaledDutyPcts(int brightness) {
-    std::string buf, pad;
-
-    for (auto i : BRIGHTNESS_RAMP) {
-        buf += pad;
-        buf += std::to_string(i * brightness / 255);
-        pad = ",";
-    }
-
-    return buf;
-}
 }  // anonymous namespace
 
 namespace android {
@@ -60,83 +41,19 @@ namespace light {
 namespace V2_0 {
 namespace implementation {
 
-static const std::string kSysLedPath = "/sys/class/leds";
-
-Led::Led(int index, const std::string& name) :
-        mIndex(index),
-        mName(name) {
-    std::string path = kSysLedPath + "/" + name;
-
-    mBrightness.open(path + "/brightness");
-    mDutyPcts.open(path + "/duty_pcts");
-    mStartIdx.open(path + "/start_idx");
-    mPauseLo.open(path + "/pause_lo");
-    mPauseHi.open(path + "/pause_hi");
-    mRampStepMs.open(path + "/ramp_step_ms");
-    mBlink.open(path + "/blink");
-}
-
-Led::operator bool() const {
-    return mBrightness &&
-           mDutyPcts &&
-           mStartIdx &&
-           mPauseLo &&
-           mPauseHi &&
-           mRampStepMs &&
-           mBlink;
-}
-
-bool Led::operator!() const {
-    return !mBrightness ||
-           !mDutyPcts ||
-           !mStartIdx ||
-           !mPauseLo ||
-           !mPauseHi ||
-           !mRampStepMs ||
-           !mBlink;
-}
-
 void Led::setBrightness(int value) {
     LOG(INFO) << "setBrightness: brightness=" << value;
-    mBlink << 0 << std::endl;
     mBrightness << value << std::endl;
 }
 
-void Led::setBlink(int brightness, int onMs, int offMs) {
-    int stepDuration = RAMP_STEP_DURATION;
-    int pauseHi = onMs - (stepDuration * RAMP_SIZE * 2);
-    if (stepDuration * RAMP_SIZE * 2 > onMs) {
-        stepDuration = onMs / (RAMP_SIZE * 2);
-        pauseHi = 0;
-    }
-
-    mStartIdx << (mIndex * RAMP_SIZE) << std::endl;
-    mDutyPcts << getScaledDutyPcts(brightness) << std::endl;
-    mPauseLo << offMs << std::endl;
-    mPauseHi << pauseHi << std::endl;
-    mRampStepMs << stepDuration << std::endl;
-}
-
 Light::Light(std::pair<std::ofstream, uint32_t>&& lcd_backlight,
-             std::ofstream&& button_backlight,
-             Led&& red_led, Led&& green_led, Led&& blue_led,
-             std::ofstream&& rgb_blink)
+             std::ofstream&& button_backlight)
     : mLcdBacklight(std::move(lcd_backlight)),
-      mButtonBacklight(std::move(button_backlight)),
-      mRedLed(std::move(red_led)),
-      mGreenLed(std::move(green_led)),
-      mBlueLed(std::move(blue_led)),
-      mRgbBlink(std::move(rgb_blink)) {
-    auto attnFn(std::bind(&Light::setAttentionLight, this, std::placeholders::_1));
+      mButtonBacklight(std::move(button_backlight)) {
     auto buttonBacklightFn(std::bind(&Light::setButtonBacklight, this, std::placeholders::_1));
     auto lcdBacklightFn(std::bind(&Light::setLcdBacklight, this, std::placeholders::_1));
-    auto batteryFn(std::bind(&Light::setBatteryLight, this, std::placeholders::_1));
-    auto notifFn(std::bind(&Light::setNotificationLight, this, std::placeholders::_1));
-    mLights.emplace(std::make_pair(Type::ATTENTION, attnFn));
     mLights.emplace(std::make_pair(Type::BACKLIGHT, lcdBacklightFn));
-    mLights.emplace(std::make_pair(Type::BATTERY, batteryFn));
     mLights.emplace(std::make_pair(Type::BUTTONS, buttonBacklightFn));
-    mLights.emplace(std::make_pair(Type::NOTIFICATIONS, notifFn));
 }
 
 // Methods from ::android::hardware::light::V2_0::ILight follow.
@@ -164,12 +81,6 @@ Return<void> Light::getSupportedTypes(getSupportedTypes_cb _hidl_cb) {
     return Void();
 }
 
-void Light::setAttentionLight(const LightState& state) {
-    std::lock_guard<std::mutex> lock(mLock);
-    mAttentionState = state;
-    setSpeakerBatteryLightLocked();
-}
-
 void Light::setLcdBacklight(const LightState& state) {
     std::lock_guard<std::mutex> lock(mLock);
 
@@ -194,87 +105,6 @@ void Light::setButtonBacklight(const LightState& state) {
     std::lock_guard<std::mutex> lock(mLock);
     uint32_t brightness = rgbToBrightness(state);
     mButtonBacklight << brightness << std::endl;
-}
-
-void Light::setBatteryLight(const LightState& state) {
-    std::lock_guard<std::mutex> lock(mLock);
-
-    mBatteryState = state;
-    setSpeakerBatteryLightLocked();
-}
-
-void Light::setNotificationLight(const LightState& state) {
-    std::lock_guard<std::mutex> lock(mLock);
-
-    uint32_t brightness, color, rgb[3];
-    LightState localState = state;
-
-    // If a brightness has been applied by the user
-    brightness = (localState.color & 0xff000000) >> 24;
-    if (brightness > 0 && brightness < 255) {
-        // Retrieve each of the RGB colors
-        color = localState.color & 0x00ffffff;
-        rgb[0] = (color >> 16) & 0xff;
-        rgb[1] = (color >> 8) & 0xff;
-        rgb[2] = color & 0xff;
-
-        // Apply the brightness level
-        if (rgb[0] > 0) {
-            rgb[0] = (rgb[0] * brightness) / 0xff;
-        }
-        if (rgb[1] > 0) {
-            rgb[1] = (rgb[1] * brightness) / 0xff;
-        }
-        if (rgb[2] > 0) {
-            rgb[2] = (rgb[2] * brightness) / 0xff;
-        }
-
-        // Update with the new color
-        localState.color = (rgb[0] << 16) + (rgb[1] << 8) + rgb[2];
-    }
-
-    mNotificationState = localState;
-    setSpeakerBatteryLightLocked();
-}
-
-void Light::setSpeakerBatteryLightLocked() {
-    if (isLit(mNotificationState)) {
-        setSpeakerLightLocked(mNotificationState);
-    } else if (isLit(mAttentionState)) {
-        setSpeakerLightLocked(mAttentionState);
-    } else if (isLit(mBatteryState)) {
-        setSpeakerLightLocked(mBatteryState);
-    } else {
-        // Lights off
-        mRedLed.off();
-        mGreenLed.off();
-        mBlueLed.off();
-    }
-}
-
-void Light::setSpeakerLightLocked(const LightState& state) {
-    int r = (state.color >> 16) & 0xff;
-    int g = (state.color >> 8) & 0xff;
-    int b = (state.color) & 0xff;
-
-    // Disable all blinking to start
-    mRgbBlink << 0 << std::endl;
-
-    switch (state.flashMode) {
-        case Flash::TIMED:
-            mRedLed.setBlink(r, state.flashOnMs, state.flashOffMs);
-            mGreenLed.setBlink(g, state.flashOnMs, state.flashOffMs);
-            mBlueLed.setBlink(b, state.flashOnMs, state.flashOffMs);
-            // Start the party
-            mRgbBlink << 1 << std::endl;
-            break;
-        case Flash::NONE:
-        default:
-            mRedLed.setBrightness(r);
-            mGreenLed.setBrightness(g);
-            mBlueLed.setBrightness(b);
-            break;
-    }
 }
 
 }  // namespace implementation
