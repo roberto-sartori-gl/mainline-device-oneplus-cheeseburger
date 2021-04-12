@@ -9,6 +9,10 @@ on post-fs
     # set RLIMIT_MEMLOCK to 64MB
     setrlimit 8 67108864 67108864
 
+    # set permissions for backlight brightness node
+    chown system system /sys/class/backlight/c994000.dsi.0/brightness
+    chmod 0660 /sys/class/backlight/c994000.dsi.0/brightness
+
 on init
     # Initialize cpusets to boot-time values
     write /dev/cpuset/foreground/cpus 0-7
