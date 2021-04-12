@@ -21,3 +21,8 @@ PRODUCT_COPY_FILES += \
     vendor/oneplus/qcom/msm8998/oneplus/slpius.jsn:$(TARGET_COPY_OUT_VENDOR)/firmware/qcom/OnePlus/MSM8998/slpius.jsn \
     vendor/oneplus/qcom/msm8998/oneplus/slpi_v2.mbn:$(TARGET_COPY_OUT_VENDOR)/firmware/qcom/OnePlus/MSM8998/slpi_v2.mbn \
     vendor/oneplus/qcom/msm8998/oneplus/wlanmdsp.mbn:$(TARGET_COPY_OUT_VENDOR)/firmware/qcom/OnePlus/MSM8998/wlanmdsp.mbn
+
+# Wlan firmwares
+PRODUCT_COPY_FILES += \
+    vendor/oneplus/ath10k/WCN3990/hw1.0/board-2.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/ath10k/WCN3990/hw1.0/board-2.bin \
+    vendor/oneplus/ath10k/WCN3990/hw1.0/firmware-5.bin:$(TARGET_COPY_OUT_VENDOR)/firmware/ath10k/WCN3990/hw1.0/firmware-5.bin
