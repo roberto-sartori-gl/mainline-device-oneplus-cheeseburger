@@ -1,0 +1,23 @@
+cc_binary {
+    name: "diag",
+    vendor: true,
+    srcs: [
+	"router/app_cmds.c",
+        "router/circ_buf.c",
+        "router/common_cmds.c",
+        "router/diag.c",
+        "router/diag_cntl.c",
+        "router/dm.c",
+        "router/hdlc.c",
+        "router/masks.c",
+        "router/mbuf.c",
+        "router/peripheral.c",
+        "router/router.c",
+        "router/socket.c",
+        "router/uart.c",
+        "router/unix.c",
+        "router/usb.c",
+        "router/util.c",
+        "router/watch.c",
+    ],
+}
