@@ -19,6 +19,13 @@ service tqftpserv /vendor/bin/tqftpserv
     disabled
     oneshot
 
+service diag /vendor/bin/diag
+    class core
+    user root
+    group system
+    disabled
+    oneshot
+
 service rmtfs /vendor/bin/rmtfs -o /dev/block/platform/soc@0/1da4000.ufshc/by-name -P -r -s
     class core
     user root
@@ -44,8 +51,25 @@ on post-fs-data
     mkdir /data/vendor/readonly/firmware
     mkdir /data/vendor/readonly/firmware/image
     write /sys/class/firmware/timeout 1
+    mount configfs none /sys/kernel/config/
+    mkdir /sys/kernel/config/usb_gadget/g1
+    mkdir /sys/kernel/config/usb_gadget/g1/strings/0x409
+    mkdir /sys/kernel/config/usb_gadget/g1/functions/ffs.diag
+    mkdir /sys/kernel/config/usb_gadget/g1/configs/b.1
+    mkdir /sys/kernel/config/usb_gadget/g1/configs/b.1/strings/0x409
+    write /sys/kernel/config/usb_gadget/g1/idVendor 0x1234
+    write /sys/kernel/config/usb_gadget/g1/idProduct 0x1234
+    write /sys/kernel/config/usb_gadget/g1/strings/0x409/serialnumber 12345678
+    write /sys/kernel/config/usb_gadget/g1/strings/0x409/manufacturer "Qualcomm"
+    write /sys/kernel/config/usb_gadget/g1/strings/0x409/product "Modem"
+    write /sys/kernel/config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "diag_dun"
+    symlink /sys/kernel/config/usb_gadget/g1/functions/ffs.diag /sys/kernel/config/usb_gadget/g1/configs/b.1
+    mkdir /dev/ffs-diag
+    mount functionfs diag /dev/ffs-diag
     start tqftpserv
     start rmtfs
+    start diag
+    write /sys/kernel/config/usb_gadget/g1/UDC a800000.dwc3
 
 on shutdown
     stop rmtfs
