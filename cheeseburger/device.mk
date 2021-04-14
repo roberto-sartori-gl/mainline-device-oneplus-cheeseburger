@@ -42,7 +42,8 @@ PRODUCT_PACKAGES += \
     qrtr-cfg \
     qrtr-lookup \
     rmtfs \
-    tqftpserv
+    tqftpserv \
+    diag
 
 PRODUCT_COPY_FILES += \
     device/oneplus/cheeseburger/qcom/init.qcom.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.qcom.rc
